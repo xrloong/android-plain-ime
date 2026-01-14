@@ -25,13 +25,15 @@ class QwertyKeyboardView
 
         init {
             orientation = VERTICAL
-            // 設置鍵盤背景色
-            setBackgroundColor(0xFFEEEEEE.toInt())
-            // 設置間距
+            val keyboardBgColor =
+                resources.getColor(
+                    resources.getIdentifier("keyboard_background", "color", context.packageName),
+                    null,
+                )
+            setBackgroundColor(keyboardBgColor)
             val paddingDp = 4
             val paddingPx = (paddingDp * resources.displayMetrics.density).toInt()
             setPadding(paddingPx, paddingPx, paddingPx, paddingPx)
-            // 初始化鍵盤佈局
             setupKeyboard()
         }
 

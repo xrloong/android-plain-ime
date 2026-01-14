@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 日間模式顏色 -->
+    <color name="keyboard_background">#FFEEEEEE</color>
+    <color name="key_background">#FFFFFFFF</color>
+    <color name="key_text">#FF000000</color>
+    <color name="key_pressed">#FFE0E0E0</color>
+    <color name="function_key_background">#FFF0F0F0</color>
+    <color name="candidate_background">#FFF5F5F5</color>
+    <color name="candidate_text">#FF000000</color>
+    <color name="candidate_divider">#FFDDDDDD</color>
+    <color name="candidate_empty_text">#FF999999</color>
+    <color name="compose_background">#FFFFFFFF</color>
+    <color name="compose_text">#FF000000</color>
+</resources>
