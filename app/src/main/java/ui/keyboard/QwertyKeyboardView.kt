@@ -133,11 +133,9 @@ class QwertyKeyboardView
         private fun createKeyButton(key: String): android.widget.Button {
             val button = KeyButton(context)
 
-            // 提取英文字母部分（用於發送按鍵事件）
             val englishKey = key.substringBefore('\n')
-
-            // 顯示完整的文字（字母\n字根）
-            button.text = key
+            val chineseRoot = key.substringAfter('\n')
+            button.text = chineseRoot
 
             // 設置按鍵尺寸（高度 56dp 以容納兩行文字）
             val heightDp = 56
