@@ -8,6 +8,7 @@ import android.widget.ProgressBar
 import android.widget.TextView
 import ui.candidate.CandidateView
 import ui.compose.ComposeView
+import ui.keyboard.KeyboardLayout
 import ui.keyboard.KeyboardState
 import ui.keyboard.QwertyKeyboardView
 
@@ -188,6 +189,20 @@ class InputMethodView @JvmOverloads constructor(
     fun clear() {
         composeView.clear()
         candidateView.setCandidates(emptyList())
+    }
+
+    /**
+     * Toggle keyboard layout
+     */
+    fun toggleKeyboardLayout() {
+        keyboardView.toggleLayout()
+    }
+
+    /**
+     * Get current keyboard layout
+     */
+    fun getCurrentKeyboardLayout(): KeyboardLayout {
+        return keyboardView.getCurrentLayout()
     }
 
     /**

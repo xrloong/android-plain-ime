@@ -22,6 +22,7 @@ class QwertyKeyboardView
         defStyleAttr: Int = 0,
     ) : LinearLayout(context, attrs, defStyleAttr) {
         private var keyClickListener: KeyClickListener? = null
+        private var currentLayout: KeyboardLayout = KeyboardLayout.Cangjie
 
         init {
             orientation = VERTICAL
@@ -64,7 +65,34 @@ class QwertyKeyboardView
             }
         }
 
+        /**
+         * Toggle between Cangjie and Punctuation layouts
+         */
+        fun toggleLayout() {
+            currentLayout = when (currentLayout) {
+                is KeyboardLayout.Cangjie -> KeyboardLayout.Punctuation
+                is KeyboardLayout.Punctuation -> KeyboardLayout.Cangjie
+            }
+            setupKeyboard()
+        }
+
+        /**
+         * Get current layout
+         */
+        fun getCurrentLayout(): KeyboardLayout = currentLayout
+
         private fun setupKeyboard() {
+            removeAllViews()  // Clear before rebuilding
+
+            when (currentLayout) {
+                is KeyboardLayout.Cangjie -> setupCangjieLayout()
+                is KeyboardLayout.Punctuation -> setupPunctuationLayout()
+            }
+
+            addFunctionKeyRow()
+        }
+
+        private fun setupCangjieLayout() {
             // 第一行：手 田 水 口 廿 卜 山 戈 人 心
             addKeyRow(
                 listOf(
@@ -108,9 +136,52 @@ class QwertyKeyboardView
                     "m\n一",
                 ),
             )
+        }
 
-            // 第四行：功能鍵
-            addFunctionKeyRow()
+        private fun setupPunctuationLayout() {
+            // Row 1: Common Chinese punctuation (10 keys)
+            addKeyRow(
+                listOf(
+                    "，\n，",
+                    "。\n。",
+                    "？\n？",
+                    "！\n！",
+                    "：\n：",
+                    "；\n；",
+                    "（\n（",
+                    "）\n）",
+                    "「\n「",
+                    "」\n」",
+                ),
+            )
+
+            // Row 2: Additional punctuation (9 keys)
+            addKeyRow(
+                listOf(
+                    "—\n—",
+                    "～\n～",
+                    "『\n『",
+                    "』\n』",
+                    "【\n【",
+                    "】\n】",
+                    "《\n《",
+                    "》\n》",
+                    "、\n、",
+                ),
+            )
+
+            // Row 3: Numbers (7 keys)
+            addKeyRow(
+                listOf(
+                    "1\n1",
+                    "2\n2",
+                    "3\n3",
+                    "4\n4",
+                    "5\n5",
+                    "6\n6",
+                    "7\n7",
+                ),
+            )
         }
 
         private fun addKeyRow(keys: List<String>) {
@@ -177,6 +248,16 @@ class QwertyKeyboardView
                     LayoutParams.WRAP_CONTENT,
                 )
 
+            // Toggle button (leftmost position)
+            val toggleButton = createFunctionKeyButton(
+                label = when (currentLayout) {
+                    is KeyboardLayout.Cangjie -> "符"
+                    is KeyboardLayout.Punctuation -> "倉"
+                },
+                key = "LAYOUT_TOGGLE"
+            )
+            rowLayout.addView(toggleButton)
+
             // Enter 鍵
             val enterButton = createFunctionKeyButton("確認", "ENTER")
             rowLayout.addView(enterButton)
@@ -229,6 +310,7 @@ class QwertyKeyboardView
          */
         private fun getAlternativeKeys(key: String): List<String> =
             when (key) {
+                // Cangjie layout alternatives (accented characters)
                 "a" -> listOf("@", "á", "à", "â", "ä", "ã")
                 "e" -> listOf("é", "è", "ê", "ë")
                 "i" -> listOf("í", "ì", "î", "ï")
@@ -237,7 +319,26 @@ class QwertyKeyboardView
                 "n" -> listOf("ñ")
                 "c" -> listOf("ç")
                 "s" -> listOf("$", "§")
-                "." -> listOf(",", "!", "?", ":", ";")
+                // Punctuation layout alternatives (Chinese punctuation)
+                "，" -> listOf("、", ",")
+                "。" -> listOf("．", "·", ".")
+                "？" -> listOf("?")
+                "！" -> listOf("!")
+                "：" -> listOf(":")
+                "；" -> listOf(";")
+                "（" -> listOf("【", "(")
+                "）" -> listOf("】", ")")
+                "「" -> listOf("『", "\"", """)
+                "」" -> listOf("』", "\"", """)
+                "—" -> listOf("–", "-", "－")
+                "～" -> listOf("~")
+                "『" -> listOf("「", "[", "'")
+                "』" -> listOf("」", "]", "'")
+                "【" -> listOf("（", "{")
+                "】" -> listOf("）", "}")
+                "《" -> listOf("〈", "<")
+                "》" -> listOf("〉", ">")
+                "、" -> listOf("，", "/", "\\")
                 else -> emptyList()
             }
 

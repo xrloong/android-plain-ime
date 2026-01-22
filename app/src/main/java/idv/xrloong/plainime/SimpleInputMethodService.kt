@@ -81,6 +81,7 @@ class SimpleInputMethodService : InputMethodService() {
             "BACKSPACE" -> handleBackspace()
             "SPACE" -> handleSpace()
             "ENTER" -> handleEnter()
+            "LAYOUT_TOGGLE" -> handleLayoutToggle()
             else -> handleCharacterKey(key)
         }
         updateUI()
@@ -88,7 +89,11 @@ class SimpleInputMethodService : InputMethodService() {
 
     private fun handleCharacterKey(key: String) {
         if (key.length == 1 && key[0].lowercaseChar() in 'a'..'z') {
+            // 倉頡編碼輸入
             engineManager.processKey(key[0].lowercaseChar())
+        } else if (key.isNotEmpty()) {
+            // 直接輸入字符（標點符號、數字等）
+            currentInputConnection?.commitText(key, 1)
         }
     }
 
@@ -125,6 +130,10 @@ class SimpleInputMethodService : InputMethodService() {
             // 無編碼時，發送 Enter 鍵
             sendDefaultEditorAction(true)
         }
+    }
+
+    private fun handleLayoutToggle() {
+        inputMethodView.toggleKeyboardLayout()
     }
 
     private fun handleCandidateSelection(index: Int) {
