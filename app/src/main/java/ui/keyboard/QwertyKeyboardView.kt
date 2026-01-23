@@ -72,6 +72,19 @@ class QwertyKeyboardView
             currentLayout = when (currentLayout) {
                 is KeyboardLayout.Cangjie -> KeyboardLayout.Punctuation
                 is KeyboardLayout.Punctuation -> KeyboardLayout.Cangjie
+                is KeyboardLayout.English -> KeyboardLayout.Punctuation
+            }
+            setupKeyboard()
+        }
+
+        /**
+         * Toggle between English and Cangjie input methods
+         */
+        fun toggleInputMethod() {
+            currentLayout = when (currentLayout) {
+                is KeyboardLayout.Cangjie -> KeyboardLayout.English
+                is KeyboardLayout.English -> KeyboardLayout.Cangjie
+                is KeyboardLayout.Punctuation -> KeyboardLayout.English
             }
             setupKeyboard()
         }
@@ -87,6 +100,7 @@ class QwertyKeyboardView
             when (currentLayout) {
                 is KeyboardLayout.Cangjie -> setupCangjieLayout()
                 is KeyboardLayout.Punctuation -> setupPunctuationLayout()
+                is KeyboardLayout.English -> setupEnglishLayout()
             }
 
             addFunctionKeyRow()
@@ -124,18 +138,27 @@ class QwertyKeyboardView
                 ),
             )
 
-            // 第三行：重 難 金 女 月 弓 一
-            addKeyRow(
-                listOf(
-                    "z\n重",
-                    "x\n難",
-                    "c\n金",
-                    "v\n女",
-                    "b\n月",
-                    "n\n弓",
-                    "m\n一",
-                ),
-            )
+            // 第三行：Shift + 重 難 金 女 月 弓 一 + Backspace
+            val row3Layout = LinearLayout(context).apply {
+                orientation = HORIZONTAL
+                layoutParams = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT)
+            }
+
+            // Shift key
+            val shiftButton = createFunctionKeyButton("⇧", "SHIFT")
+            row3Layout.addView(shiftButton)
+
+            // z-m keys
+            for (key in listOf("z\n重", "x\n難", "c\n金", "v\n女", "b\n月", "n\n弓", "m\n一")) {
+                val keyButton = createKeyButton(key)
+                row3Layout.addView(keyButton)
+            }
+
+            // Backspace key (moved from function row)
+            val backspaceButton = createFunctionKeyButton("⌫", "BACKSPACE")
+            row3Layout.addView(backspaceButton)
+
+            addView(row3Layout)
         }
 
         private fun setupPunctuationLayout() {
@@ -170,18 +193,82 @@ class QwertyKeyboardView
                 ),
             )
 
-            // Row 3: Numbers (7 keys)
+            // Row 3: Shift + Numbers + Backspace
+            val row3Layout = LinearLayout(context).apply {
+                orientation = HORIZONTAL
+                layoutParams = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT)
+            }
+
+            // Shift key
+            val shiftButton = createFunctionKeyButton("⇧", "SHIFT")
+            row3Layout.addView(shiftButton)
+
+            // Number keys
+            for (key in listOf("1\n1", "2\n2", "3\n3", "4\n4", "5\n5", "6\n6", "7\n7")) {
+                val keyButton = createKeyButton(key)
+                row3Layout.addView(keyButton)
+            }
+
+            // Backspace key
+            val backspaceButton = createFunctionKeyButton("⌫", "BACKSPACE")
+            row3Layout.addView(backspaceButton)
+
+            addView(row3Layout)
+        }
+
+        private fun setupEnglishLayout() {
+            // Row 1: Q-P
             addKeyRow(
                 listOf(
-                    "1\n1",
-                    "2\n2",
-                    "3\n3",
-                    "4\n4",
-                    "5\n5",
-                    "6\n6",
-                    "7\n7",
+                    "q\nQ",
+                    "w\nW",
+                    "e\nE",
+                    "r\nR",
+                    "t\nT",
+                    "y\nY",
+                    "u\nU",
+                    "i\nI",
+                    "o\nO",
+                    "p\nP",
                 ),
             )
+
+            // Row 2: A-L
+            addKeyRow(
+                listOf(
+                    "a\nA",
+                    "s\nS",
+                    "d\nD",
+                    "f\nF",
+                    "g\nG",
+                    "h\nH",
+                    "j\nJ",
+                    "k\nK",
+                    "l\nL",
+                ),
+            )
+
+            // Row 3: Shift + Z-M + Backspace
+            val row3Layout = LinearLayout(context).apply {
+                orientation = HORIZONTAL
+                layoutParams = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT)
+            }
+
+            // Shift key
+            val shiftButton = createFunctionKeyButton("⇧", "SHIFT")
+            row3Layout.addView(shiftButton)
+
+            // z-m keys
+            for (key in listOf("z\nZ", "x\nX", "c\nC", "v\nV", "b\nB", "n\nN", "m\nM")) {
+                val keyButton = createKeyButton(key)
+                row3Layout.addView(keyButton)
+            }
+
+            // Backspace key
+            val backspaceButton = createFunctionKeyButton("⌫", "BACKSPACE")
+            row3Layout.addView(backspaceButton)
+
+            addView(row3Layout)
         }
 
         private fun addKeyRow(keys: List<String>) {
@@ -203,12 +290,14 @@ class QwertyKeyboardView
             addView(rowLayout)
         }
 
-        private fun createKeyButton(key: String): android.widget.Button {
+        private fun createKeyButton(key: String): KeyButton {
             val button = KeyButton(context)
 
             val englishKey = key.substringBefore('\n')
             val chineseRoot = key.substringAfter('\n')
-            button.text = chineseRoot
+
+            // Set dual text for custom rendering
+            button.setDualText(englishKey.uppercase(), chineseRoot)
 
             // 設置按鍵尺寸（高度 56dp 以容納兩行文字）
             val heightDp = 56
@@ -248,35 +337,33 @@ class QwertyKeyboardView
                     LayoutParams.WRAP_CONTENT,
                 )
 
-            // Toggle button (leftmost position)
-            val toggleButton = createFunctionKeyButton(
-                label = when (currentLayout) {
-                    is KeyboardLayout.Cangjie -> "符"
-                    is KeyboardLayout.Punctuation -> "倉"
-                },
-                key = "LAYOUT_TOGGLE"
-            )
-            rowLayout.addView(toggleButton)
-
-            // Enter 鍵
-            val enterButton = createFunctionKeyButton("確認", "ENTER")
-            rowLayout.addView(enterButton)
-
-            // Space 鍵
-            val spaceButton = createFunctionKeyButton("空白", "SPACE")
             val heightDp = 56
             val heightPx = (heightDp * resources.displayMetrics.density).toInt()
-            spaceButton.layoutParams =
-                LinearLayout.LayoutParams(
-                    0,
-                    heightPx,
-                    3f,
-                )
+
+            // 1. ?123 button (switch to number/punctuation layout)
+            val numberButton = createFunctionKeyButton("?123", "LAYOUT_TOGGLE")
+            rowLayout.addView(numberButton)
+
+            // 2. Comma button
+            val commaButton = createFunctionKeyButton("，", "COMMA")
+            rowLayout.addView(commaButton)
+
+            // 3. Globe button (language switch)
+            val globeButton = createFunctionKeyButton("🌐", "GLOBE")
+            rowLayout.addView(globeButton)
+
+            // 4. Space button with "倉頡" label (2x width)
+            val spaceButton = createFunctionKeyButton("倉頡", "SPACE")
+            spaceButton.layoutParams = LinearLayout.LayoutParams(0, heightPx, 2f)
             rowLayout.addView(spaceButton)
 
-            // Backspace 鍵
-            val backspaceButton = createFunctionKeyButton("⌫", "BACKSPACE")
-            rowLayout.addView(backspaceButton)
+            // 5. Period button
+            val periodButton = createFunctionKeyButton("。", "PERIOD")
+            rowLayout.addView(periodButton)
+
+            // 6. Return button
+            val returnButton = createFunctionKeyButton("↵", "ENTER")
+            rowLayout.addView(returnButton)
 
             addView(rowLayout)
         }

@@ -192,10 +192,17 @@ class InputMethodView @JvmOverloads constructor(
     }
 
     /**
-     * Toggle keyboard layout
+     * Toggle keyboard layout (Cangjie <-> Punctuation)
      */
     fun toggleKeyboardLayout() {
         keyboardView.toggleLayout()
+    }
+
+    /**
+     * Toggle input method (English <-> Cangjie)
+     */
+    fun toggleInputMethod() {
+        keyboardView.toggleInputMethod()
     }
 
     /**

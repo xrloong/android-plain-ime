@@ -13,4 +13,9 @@ sealed class KeyboardLayout {
      * Punctuation symbol layout
      */
     object Punctuation : KeyboardLayout()
+
+    /**
+     * English QWERTY layout
+     */
+    object English : KeyboardLayout()
 }

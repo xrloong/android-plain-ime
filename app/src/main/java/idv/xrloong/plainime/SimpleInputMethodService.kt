@@ -82,15 +82,26 @@ class SimpleInputMethodService : InputMethodService() {
             "SPACE" -> handleSpace()
             "ENTER" -> handleEnter()
             "LAYOUT_TOGGLE" -> handleLayoutToggle()
+            "SHIFT" -> handleShift()
+            "COMMA" -> handleComma()
+            "GLOBE" -> handleGlobe()
+            "PERIOD" -> handlePeriod()
             else -> handleCharacterKey(key)
         }
         updateUI()
     }
 
     private fun handleCharacterKey(key: String) {
+        val currentLayout = inputMethodView.getCurrentKeyboardLayout()
+
         if (key.length == 1 && key[0].lowercaseChar() in 'a'..'z') {
-            // 倉頡編碼輸入
-            engineManager.processKey(key[0].lowercaseChar())
+            // Check if in Cangjie mode - use engine for Cangjie encoding
+            // In English mode - directly insert the letter
+            if (currentLayout is ui.keyboard.KeyboardLayout.Cangjie) {
+                engineManager.processKey(key[0].lowercaseChar())
+            } else {
+                currentInputConnection?.commitText(key, 1)
+            }
         } else if (key.isNotEmpty()) {
             // 直接輸入字符（標點符號、數字等）
             currentInputConnection?.commitText(key, 1)
@@ -134,6 +145,26 @@ class SimpleInputMethodService : InputMethodService() {
 
     private fun handleLayoutToggle() {
         inputMethodView.toggleKeyboardLayout()
+    }
+
+    private fun handleShift() {
+        // TODO: Implement shift functionality (uppercase/symbols toggle)
+        // For now, do nothing - placeholder for future enhancement
+    }
+
+    private fun handleComma() {
+        // Insert comma
+        currentInputConnection?.commitText("，", 1)
+    }
+
+    private fun handleGlobe() {
+        // Toggle between English and Cangjie input methods
+        inputMethodView.toggleInputMethod()
+    }
+
+    private fun handlePeriod() {
+        // Insert period
+        currentInputConnection?.commitText("。", 1)
     }
 
     private fun handleCandidateSelection(index: Int) {

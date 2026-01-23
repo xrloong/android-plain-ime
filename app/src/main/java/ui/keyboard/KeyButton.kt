@@ -30,6 +30,21 @@ class KeyButton
 
         private val cornerRadius = 8f
 
+        // Dual-text rendering properties
+        private var englishLetter: String = ""
+        private var chineseRoot: String = ""
+        private val englishPaint = Paint().apply {
+            textSize = 10f * resources.displayMetrics.scaledDensity  // 10sp
+            textAlign = Paint.Align.CENTER
+            isAntiAlias = true
+        }
+        private val chinesePaint = Paint().apply {
+            textSize = 16f * resources.displayMetrics.scaledDensity  // 16sp
+            textAlign = Paint.Align.CENTER
+            isAntiAlias = true
+            isFakeBoldText = false
+        }
+
         init {
             setBackgroundColor(android.graphics.Color.TRANSPARENT)
             val textColorId = resources.getIdentifier("key_text", "color", context.packageName)
@@ -41,6 +56,15 @@ class KeyButton
 
             maxLines = 2
             setLines(2)
+        }
+
+        /**
+         * Set dual text for English letter above and Chinese root below
+         */
+        fun setDualText(english: String, chinese: String) {
+            this.englishLetter = english
+            this.chineseRoot = chinese
+            invalidate()
         }
 
         override fun onDraw(canvas: Canvas) {
@@ -72,7 +96,19 @@ class KeyButton
             paint.strokeWidth = 1f
             canvas.drawRoundRect(rectF, cornerRadius, cornerRadius, paint)
 
-            super.onDraw(canvas)
+            // Draw only Chinese root if set, otherwise use default text rendering
+            if (chineseRoot.isNotEmpty()) {
+                val centerX = width / 2f
+                val centerY = height / 2f + chinesePaint.textSize / 3f  // Center vertically
+
+                // Update paint color from current text color
+                chinesePaint.color = currentTextColor
+
+                canvas.drawText(chineseRoot, centerX, centerY, chinesePaint)
+            } else {
+                // Fall back to default text rendering for function keys
+                super.onDraw(canvas)
+            }
         }
 
         override fun onTouchEvent(event: MotionEvent): Boolean {
