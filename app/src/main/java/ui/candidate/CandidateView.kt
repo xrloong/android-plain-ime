@@ -43,7 +43,10 @@ class CandidateView
                             LayoutParams.MATCH_PARENT,
                         )
                     gravity = Gravity.CENTER_VERTICAL
-                    setPadding(16, 8, 16, 8)
+                    // Reduced vertical padding to prevent text cutoff
+                    val horizontalPadding = (16 * resources.displayMetrics.density).toInt()
+                    val verticalPadding = (4 * resources.displayMetrics.density).toInt()
+                    setPadding(horizontalPadding, verticalPadding, horizontalPadding, verticalPadding)
                 }
 
             addView(candidateLayout)
@@ -93,8 +96,10 @@ class CandidateView
                 setTextColor(resources.getColor(textColorId, null))
                 gravity = Gravity.CENTER
 
-                val padding = resources.getDimensionPixelSize(android.R.dimen.app_icon_size) / 4
-                setPadding(padding, padding / 2, padding, padding / 2)
+                // Reduced padding to prevent text cutoff
+                val horizontalPadding = (12 * resources.displayMetrics.density).toInt()
+                val verticalPadding = (4 * resources.displayMetrics.density).toInt()
+                setPadding(horizontalPadding, verticalPadding, horizontalPadding, verticalPadding)
 
                 layoutParams =
                     LinearLayout.LayoutParams(
@@ -137,8 +142,10 @@ class CandidateView
                     setTextColor(resources.getColor(emptyTextColorId, null))
                     gravity = Gravity.CENTER
 
-                    val padding = resources.getDimensionPixelSize(android.R.dimen.app_icon_size) / 2
-                    setPadding(padding, padding / 2, padding, padding / 2)
+                    // Reduced padding to prevent text cutoff
+                    val horizontalPadding = (16 * resources.displayMetrics.density).toInt()
+                    val verticalPadding = (4 * resources.displayMetrics.density).toInt()
+                    setPadding(horizontalPadding, verticalPadding, horizontalPadding, verticalPadding)
                 }
             candidateLayout.addView(emptyView)
         }

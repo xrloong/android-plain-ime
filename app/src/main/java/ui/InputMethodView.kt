@@ -51,9 +51,11 @@ class InputMethodView @JvmOverloads constructor(
 
         // 候選字視圖
         candidateView = CandidateView(context).apply {
+            val heightDp = 48
+            val heightPx = (heightDp * resources.displayMetrics.density).toInt()
             layoutParams = LayoutParams(
                 LayoutParams.MATCH_PARENT,
-                resources.getDimensionPixelSize(android.R.dimen.app_icon_size)
+                heightPx
             )
 
             setCandidateClickListener(object : CandidateView.CandidateClickListener {
