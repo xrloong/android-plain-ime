@@ -6,6 +6,8 @@ import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.ProgressBar
 import android.widget.TextView
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import ui.candidate.CandidateView
 import ui.compose.ComposeView
 import ui.keyboard.KeyboardLayout
@@ -132,6 +134,13 @@ class InputMethodView @JvmOverloads constructor(
             })
         }
         addView(keyboardView)
+
+        // 處理 Window Insets（系統導航欄等）
+        ViewCompat.setOnApplyWindowInsetsListener(this) { _, insets ->
+            val navBarInsets = insets.getInsets(WindowInsetsCompat.Type.navigationBars())
+            setPadding(paddingLeft, paddingTop, paddingRight, navBarInsets.bottom)
+            insets
+        }
     }
 
     /**

@@ -54,6 +54,9 @@ class SimpleInputMethodService : InputMethodService() {
         // 載入輸入法
         loadInputMethod()
 
+        // 確保視圖能夠接收 Window Insets（例如系統導航欄）
+        inputMethodView.fitsSystemWindows = true
+
         return inputMethodView
     }
 
