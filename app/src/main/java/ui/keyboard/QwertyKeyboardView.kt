@@ -23,6 +23,8 @@ class QwertyKeyboardView
     ) : LinearLayout(context, attrs, defStyleAttr) {
         private var keyClickListener: KeyClickListener? = null
         private var currentLayout: KeyboardLayout = KeyboardLayout.Cangjie
+        private var rootLabelMap: Map<Char, String> = getDefaultCangjieRoots()
+        private var spaceButton: android.widget.Button? = null
 
         init {
             orientation = VERTICAL
@@ -94,6 +96,49 @@ class QwertyKeyboardView
          */
         fun getCurrentLayout(): KeyboardLayout = currentLayout
 
+        /**
+         * 更新字根標籤 - 用於切換輸入法時動態改變鍵盤上的字根顯示
+         */
+        fun updateRootLabels(keyNameMap: Map<Char, String>) {
+            rootLabelMap = if (keyNameMap.isEmpty()) {
+                getDefaultCangjieRoots()
+            } else {
+                keyNameMap
+            }
+            // 重新構建鍵盤以應用新的字根標籤
+            if (currentLayout is KeyboardLayout.Cangjie) {
+                setupKeyboard()
+            }
+        }
+
+        /**
+         * 更新 Space 按鈕的標籤 - 用於顯示當前輸入法名稱
+         */
+        fun updateSpaceBarLabel(displayName: String) {
+            spaceButton?.text = displayName
+        }
+
+        /**
+         * 取得字根標籤 - 如果 keyNameMap 為空，使用預設倉頡字根
+         */
+        private fun getRootLabel(key: Char): String {
+            return rootLabelMap[key] ?: key.toString().uppercase()
+        }
+
+        /**
+         * 倉頡輸入法的預設字根標籤
+         */
+        private fun getDefaultCangjieRoots(): Map<Char, String> {
+            return mapOf(
+                'q' to "手", 'w' to "田", 'e' to "水", 'r' to "口", 't' to "廿",
+                'y' to "卜", 'u' to "山", 'i' to "戈", 'o' to "人", 'p' to "心",
+                'a' to "日", 's' to "尸", 'd' to "木", 'f' to "火", 'g' to "土",
+                'h' to "竹", 'j' to "十", 'k' to "大", 'l' to "中",
+                'z' to "重", 'x' to "難", 'c' to "金", 'v' to "女", 'b' to "月",
+                'n' to "弓", 'm' to "一"
+            )
+        }
+
         private fun setupKeyboard() {
             removeAllViews()  // Clear before rebuilding
 
@@ -107,38 +152,38 @@ class QwertyKeyboardView
         }
 
         private fun setupCangjieLayout() {
-            // 第一行：手 田 水 口 廿 卜 山 戈 人 心
+            // 第一行：q w e r t y u i o p
             addKeyRow(
                 listOf(
-                    "q\n手",
-                    "w\n田",
-                    "e\n水",
-                    "r\n口",
-                    "t\n廿",
-                    "y\n卜",
-                    "u\n山",
-                    "i\n戈",
-                    "o\n人",
-                    "p\n心",
+                    "q\n${getRootLabel('q')}",
+                    "w\n${getRootLabel('w')}",
+                    "e\n${getRootLabel('e')}",
+                    "r\n${getRootLabel('r')}",
+                    "t\n${getRootLabel('t')}",
+                    "y\n${getRootLabel('y')}",
+                    "u\n${getRootLabel('u')}",
+                    "i\n${getRootLabel('i')}",
+                    "o\n${getRootLabel('o')}",
+                    "p\n${getRootLabel('p')}",
                 ),
             )
 
-            // 第二行：日 尸 木 火 土 竹 十 大 中
+            // 第二行：a s d f g h j k l
             addKeyRow(
                 listOf(
-                    "a\n日",
-                    "s\n尸",
-                    "d\n木",
-                    "f\n火",
-                    "g\n土",
-                    "h\n竹",
-                    "j\n十",
-                    "k\n大",
-                    "l\n中",
+                    "a\n${getRootLabel('a')}",
+                    "s\n${getRootLabel('s')}",
+                    "d\n${getRootLabel('d')}",
+                    "f\n${getRootLabel('f')}",
+                    "g\n${getRootLabel('g')}",
+                    "h\n${getRootLabel('h')}",
+                    "j\n${getRootLabel('j')}",
+                    "k\n${getRootLabel('k')}",
+                    "l\n${getRootLabel('l')}",
                 ),
             )
 
-            // 第三行：Shift + 重 難 金 女 月 弓 一 + Backspace
+            // 第三行：Shift + z x c v b n m + Backspace
             val row3Layout = LinearLayout(context).apply {
                 orientation = HORIZONTAL
                 layoutParams = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT)
@@ -149,8 +194,8 @@ class QwertyKeyboardView
             row3Layout.addView(shiftButton)
 
             // z-m keys
-            for (key in listOf("z\n重", "x\n難", "c\n金", "v\n女", "b\n月", "n\n弓", "m\n一")) {
-                val keyButton = createKeyButton(key)
+            for (key in listOf('z', 'x', 'c', 'v', 'b', 'n', 'm')) {
+                val keyButton = createKeyButton("$key\n${getRootLabel(key)}")
                 row3Layout.addView(keyButton)
             }
 
@@ -352,9 +397,9 @@ class QwertyKeyboardView
             val globeButton = createFunctionKeyButton("🌐", "GLOBE")
             rowLayout.addView(globeButton)
 
-            // 4. Space button with "倉頡" label (2x width)
-            val spaceButton = createFunctionKeyButton("倉頡", "SPACE")
-            spaceButton.layoutParams = LinearLayout.LayoutParams(0, heightPx, 2f)
+            // 4. Space button with current input method name (2x width)
+            spaceButton = createFunctionKeyButton("倉頡", "SPACE")
+            spaceButton!!.layoutParams = LinearLayout.LayoutParams(0, heightPx, 2f)
             rowLayout.addView(spaceButton)
 
             // 5. Period button

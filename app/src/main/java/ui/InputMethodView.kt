@@ -224,6 +224,20 @@ class InputMethodView @JvmOverloads constructor(
     }
 
     /**
+     * 更新鍵盤字根標籤
+     */
+    fun updateKeyboardRootLabels(keyNameMap: Map<Char, String>) {
+        keyboardView.updateRootLabels(keyNameMap)
+    }
+
+    /**
+     * 更新空白鍵標籤（顯示輸入法名稱）
+     */
+    fun updateSpaceBarLabel(displayName: String) {
+        keyboardView.updateSpaceBarLabel(displayName)
+    }
+
+    /**
      * 輸入法監聽器
      */
     interface InputMethodListener {

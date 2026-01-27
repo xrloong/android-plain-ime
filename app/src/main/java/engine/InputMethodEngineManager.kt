@@ -2,6 +2,7 @@ package engine
 
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import cin.CINParseResult
 import table.TableManager
 import table.TableLoadState
 
@@ -121,6 +122,30 @@ class InputMethodEngineManager {
      */
     fun clearCache() {
         tableManager.clearCache()
+    }
+
+    /**
+     * 直接更新表格數據（用於輸入法切換）
+     */
+    fun updateTableData(tableData: CINParseResult) {
+        currentEngine = InputMethodEngine(tableData)
+        _engineState.postValue(
+            EngineState.Ready(
+                inputMethodName = tableData.displayName,
+                totalChars = tableData.totalChars
+            )
+        )
+    }
+
+    /**
+     * 取得當前表格數據
+     */
+    fun getCurrentTableData(): CINParseResult? {
+        return currentEngine?.let { engine ->
+            // 從引擎中取得當前使用的表格數據
+            // 這需要在 InputMethodEngine 中公開表格數據
+            null  // 暫時返回 null，後續可以優化
+        }
     }
 
     // ===== 私有方法 =====

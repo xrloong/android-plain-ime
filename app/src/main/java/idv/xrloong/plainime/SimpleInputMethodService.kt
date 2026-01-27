@@ -5,8 +5,11 @@ import android.view.View
 import android.view.inputmethod.EditorInfo
 import engine.EngineState
 import engine.InputMethodEngineManager
+import ime.InputMethodManager
+import ime.InputMethodState
 import table.TableLoader
 import ui.InputMethodView
+import ui.keyboard.KeyboardLayout
 import ui.keyboard.KeyboardState
 
 /**
@@ -18,13 +21,22 @@ class SimpleInputMethodService : InputMethodService() {
 
     private lateinit var inputMethodView: InputMethodView
     private val engineManager = InputMethodEngineManager()
+    private lateinit var inputMethodManager: InputMethodManager
 
     override fun onCreate() {
         super.onCreate()
 
+        // 初始化輸入法管理器
+        inputMethodManager = InputMethodManager(this)
+
         // 監聽 Engine 狀態
         engineManager.engineState.observeForever { state ->
             handleEngineStateChange(state)
+        }
+
+        // 監聽輸入法狀態（切換、載入、錯誤）
+        inputMethodManager.currentMethod.observeForever { state ->
+            handleInputMethodStateChange(state)
         }
     }
 
@@ -67,16 +79,9 @@ class SimpleInputMethodService : InputMethodService() {
     }
 
     private fun loadInputMethod() {
-        try {
-            val loader = TableLoader(this)
-            val inputStream = loader.loadFromAssets(TableLoader.BUILTIN_CANGJIE)
-            engineManager.loadInputMethod("cangjie", inputStream)
-        } catch (e: Exception) {
-            // 處理載入錯誤
-            inputMethodView.setKeyboardState(
-                KeyboardState.Error("無法載入輸入法: ${e.message}", true)
-            )
-        }
+        // InputMethodManager handles loading automatically in onCreate()
+        // This method is called by onRetryRequested to retry failed load
+        inputMethodManager.retry()
     }
 
     private fun handleKeyPress(key: String) {
@@ -161,8 +166,15 @@ class SimpleInputMethodService : InputMethodService() {
     }
 
     private fun handleGlobe() {
-        // Toggle between English and Cangjie input methods
-        inputMethodView.toggleInputMethod()
+        val currentLayout = inputMethodView.getCurrentKeyboardLayout()
+
+        if (currentLayout is KeyboardLayout.Cangjie) {
+            // 在中文鍵盤模式下 - 切換到下一個中文輸入法
+            inputMethodManager.switchToNext()
+        } else {
+            // 從英文/標點模式切回中文
+            inputMethodView.toggleInputMethod()
+        }
     }
 
     private fun handlePeriod() {
@@ -176,6 +188,35 @@ class SimpleInputMethodService : InputMethodService() {
             currentInputConnection?.commitText(selected.toString(), 1)
         }
         updateUI()
+    }
+
+    private fun handleInputMethodStateChange(state: InputMethodState) {
+        if (!::inputMethodView.isInitialized) return
+
+        when (state) {
+            is InputMethodState.Loading -> {
+                inputMethodView.setKeyboardState(KeyboardState.Loading)
+            }
+            is InputMethodState.Ready -> {
+                // 更新引擎的表格數據
+                engineManager.updateTableData(state.data)
+                // 清除編碼緩衝區（防止不同輸入法間編碼混淆）
+                engineManager.clear()
+                // 更新鍵盤字根標籤
+                inputMethodView.updateKeyboardRootLabels(state.data.keyNameMap)
+                // 更新空白鍵標籤（顯示輸入法名稱）
+                val metadata = inputMethodManager.getCurrentMetadata()
+                if (metadata != null) {
+                    inputMethodView.updateSpaceBarLabel(metadata.displayName)
+                }
+                inputMethodView.setKeyboardState(KeyboardState.Normal)
+            }
+            is InputMethodState.Error -> {
+                inputMethodView.setKeyboardState(
+                    KeyboardState.Error(state.message, canRetry = true)
+                )
+            }
+        }
     }
 
     private fun handleEngineStateChange(state: EngineState) {

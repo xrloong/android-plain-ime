@@ -16,6 +16,7 @@ class CINParser {
         val lines = content.lines()
         val charDefs = mutableListOf<CharDef>()
         val metadata = mutableMapOf<String, String>()
+        val keyNameMap = mutableMapOf<Char, String>()
         var inCharDefSection = false
         var inKeynameSection = false
 
@@ -86,8 +87,15 @@ class CINParser {
                     charDefs.add(CharDef(code, char[0]))
                 }
                 inKeynameSection -> {
-                    // 解析 keyname 定義（暫時忽略，不影響查表）
-                    continue
+                    // 解析 keyname 定義：鍵 字根（使用 Tab 或空白分隔）
+                    val parts = trimmed.split(Regex("[\\s\t]+"), limit = 2)
+                    if (parts.size == 2) {
+                        val key = parts[0].firstOrNull()
+                        val rootLabel = parts[1]
+                        if (key != null && rootLabel.isNotEmpty()) {
+                            keyNameMap[key] = rootLabel
+                        }
+                    }
                 }
             }
         }
@@ -97,10 +105,14 @@ class CINParser {
         }
 
         // 建立映射表
-        return buildMappings(charDefs, metadata)
+        return buildMappings(charDefs, metadata, keyNameMap)
     }
 
-    private fun buildMappings(charDefs: List<CharDef>, metadata: Map<String, String>): CINParseResult {
+    private fun buildMappings(
+        charDefs: List<CharDef>,
+        metadata: Map<String, String>,
+        keyNameMap: Map<Char, String>
+    ): CINParseResult {
         val charToCode = mutableMapOf<Char, String>()
         val codeToCandidates = mutableMapOf<String, MutableList<Char>>()
 
@@ -117,7 +129,8 @@ class CINParser {
         return CINParseResult(
             charToCode = charToCode,
             codeToCandidates = codeToCandidates.mapValues { it.value.toList() },
-            metadata = metadata
+            metadata = metadata,
+            keyNameMap = keyNameMap
         )
     }
 
@@ -127,7 +140,8 @@ class CINParser {
 data class CINParseResult(
     val charToCode: Map<Char, String>,
     val codeToCandidates: Map<String, List<Char>>,
-    val metadata: Map<String, String> = emptyMap()
+    val metadata: Map<String, String> = emptyMap(),
+    val keyNameMap: Map<Char, String> = emptyMap()
 ) {
     /**
      * 根據編碼查詢候選字
@@ -141,6 +155,13 @@ data class CINParseResult(
      */
     fun getCode(char: Char): String? {
         return charToCode[char]
+    }
+
+    /**
+     * 根據鍵查詢字根標籤
+     */
+    fun getRootLabel(key: Char): String? {
+        return keyNameMap[key.lowercaseChar()]
     }
 
     /**
@@ -160,6 +181,12 @@ data class CINParseResult(
      */
     val chineseName: String
         get() = metadata["cname"] ?: metadata["tname"] ?: "未知"
+
+    /**
+     * 輸入法顯示名稱 (優先級: sname > cname > tname > ename)
+     */
+    val displayName: String
+        get() = metadata["sname"] ?: metadata["cname"] ?: metadata["tname"] ?: metadata["ename"] ?: "未知"
 
     /**
      * 選字鍵
