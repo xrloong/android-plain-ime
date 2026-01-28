@@ -23,7 +23,9 @@ class QwertyKeyboardView
     ) : LinearLayout(context, attrs, defStyleAttr) {
         private var keyClickListener: KeyClickListener? = null
         private var currentLayout: KeyboardLayout = KeyboardLayout.Cangjie
+        private var currentLayoutConfig: LayoutConfig = LayoutConfigs.CANGJIE
         private var rootLabelMap: Map<Char, String> = getDefaultCangjieRoots()
+        private var additionalKeyRows: List<List<KeyButtonInfo>> = emptyList()
         private var spaceButton: android.widget.Button? = null
 
         init {
@@ -71,11 +73,12 @@ class QwertyKeyboardView
          * Toggle between Cangjie and Punctuation layouts
          */
         fun toggleLayout() {
-            currentLayout = when (currentLayout) {
-                is KeyboardLayout.Cangjie -> KeyboardLayout.Punctuation
-                is KeyboardLayout.Punctuation -> KeyboardLayout.Cangjie
-                is KeyboardLayout.English -> KeyboardLayout.Punctuation
-            }
+            currentLayout =
+                when (currentLayout) {
+                    is KeyboardLayout.Cangjie -> KeyboardLayout.Punctuation
+                    is KeyboardLayout.Punctuation -> KeyboardLayout.Cangjie
+                    is KeyboardLayout.English -> KeyboardLayout.Punctuation
+                }
             setupKeyboard()
         }
 
@@ -83,11 +86,12 @@ class QwertyKeyboardView
          * Toggle between English and Cangjie input methods
          */
         fun toggleInputMethod() {
-            currentLayout = when (currentLayout) {
-                is KeyboardLayout.Cangjie -> KeyboardLayout.English
-                is KeyboardLayout.English -> KeyboardLayout.Cangjie
-                is KeyboardLayout.Punctuation -> KeyboardLayout.English
-            }
+            currentLayout =
+                when (currentLayout) {
+                    is KeyboardLayout.Cangjie -> KeyboardLayout.English
+                    is KeyboardLayout.English -> KeyboardLayout.Cangjie
+                    is KeyboardLayout.Punctuation -> KeyboardLayout.English
+                }
             setupKeyboard()
         }
 
@@ -97,14 +101,28 @@ class QwertyKeyboardView
         fun getCurrentLayout(): KeyboardLayout = currentLayout
 
         /**
+         * 更新布局配置 - 用於切換輸入法時更新整個鍵盤布局
+         * 包括額外按鍵、主要布局等
+         */
+        fun updateLayout(layoutConfig: LayoutConfig) {
+            currentLayoutConfig = layoutConfig
+            additionalKeyRows = layoutConfig.additionalKeyRows
+            currentLayout = layoutConfig.primaryLayout
+            setupKeyboard()
+        }
+
+        /**
          * 更新字根標籤 - 用於切換輸入法時動態改變鍵盤上的字根顯示
+         * 應用 Fallback 機制確保所有按鍵都有標籤
          */
         fun updateRootLabels(keyNameMap: Map<Char, String>) {
-            rootLabelMap = if (keyNameMap.isEmpty()) {
-                getDefaultCangjieRoots()
-            } else {
-                keyNameMap
-            }
+            rootLabelMap =
+                if (keyNameMap.isEmpty()) {
+                    getDefaultCangjieRoots()
+                } else {
+                    // 應用 Fallback 機制
+                    KeyNameResolver.resolve(keyNameMap, getDefaultCangjieRoots())
+                }
             // 重新構建鍵盤以應用新的字根標籤
             if (currentLayout is KeyboardLayout.Cangjie) {
                 setupKeyboard()
@@ -121,26 +139,43 @@ class QwertyKeyboardView
         /**
          * 取得字根標籤 - 如果 keyNameMap 為空，使用預設倉頡字根
          */
-        private fun getRootLabel(key: Char): String {
-            return rootLabelMap[key] ?: key.toString().uppercase()
-        }
+        private fun getRootLabel(key: Char): String = rootLabelMap[key] ?: key.toString().uppercase()
 
         /**
          * 倉頡輸入法的預設字根標籤
          */
-        private fun getDefaultCangjieRoots(): Map<Char, String> {
-            return mapOf(
-                'q' to "手", 'w' to "田", 'e' to "水", 'r' to "口", 't' to "廿",
-                'y' to "卜", 'u' to "山", 'i' to "戈", 'o' to "人", 'p' to "心",
-                'a' to "日", 's' to "尸", 'd' to "木", 'f' to "火", 'g' to "土",
-                'h' to "竹", 'j' to "十", 'k' to "大", 'l' to "中",
-                'z' to "重", 'x' to "難", 'c' to "金", 'v' to "女", 'b' to "月",
-                'n' to "弓", 'm' to "一"
+        private fun getDefaultCangjieRoots(): Map<Char, String> =
+            mapOf(
+                'q' to "手",
+                'w' to "田",
+                'e' to "水",
+                'r' to "口",
+                't' to "廿",
+                'y' to "卜",
+                'u' to "山",
+                'i' to "戈",
+                'o' to "人",
+                'p' to "心",
+                'a' to "日",
+                's' to "尸",
+                'd' to "木",
+                'f' to "火",
+                'g' to "土",
+                'h' to "竹",
+                'j' to "十",
+                'k' to "大",
+                'l' to "中",
+                'z' to "重",
+                'x' to "難",
+                'c' to "金",
+                'v' to "女",
+                'b' to "月",
+                'n' to "弓",
+                'm' to "一",
             )
-        }
 
         private fun setupKeyboard() {
-            removeAllViews()  // Clear before rebuilding
+            removeAllViews() // Clear before rebuilding
 
             when (currentLayout) {
                 is KeyboardLayout.Cangjie -> setupCangjieLayout()
@@ -148,7 +183,45 @@ class QwertyKeyboardView
                 is KeyboardLayout.English -> setupEnglishLayout()
             }
 
+            // 添加額外按鍵行（如果有）
+            addAdditionalKeyRows()
+
             addFunctionKeyRow()
+        }
+
+        /**
+         * 為行列、大易等輸入法添加額外的按鍵行
+         */
+        private fun addAdditionalKeyRows() {
+            for (row in additionalKeyRows) {
+                addAdditionalKeyRow(row)
+            }
+        }
+
+        /**
+         * 添加單個額外按鍵行
+         */
+        private fun addAdditionalKeyRow(keyRow: List<KeyButtonInfo>) {
+            val rowLayout =
+                LinearLayout(context).apply {
+                    orientation = HORIZONTAL
+                    layoutParams = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT)
+                }
+
+            val heightDp = 56
+            val heightPx = (heightDp * resources.displayMetrics.density).toInt()
+
+            for (keyInfo in keyRow) {
+                val button = KeyButton(context)
+                button.text = keyInfo.chineseLabel
+                button.layoutParams = LinearLayout.LayoutParams(0, heightPx, 1f)
+                button.setOnClickListener {
+                    keyClickListener?.onKeyClick(keyInfo.key)
+                }
+                rowLayout.addView(button)
+            }
+
+            addView(rowLayout)
         }
 
         private fun setupCangjieLayout() {
@@ -184,10 +257,11 @@ class QwertyKeyboardView
             )
 
             // 第三行：Shift + z x c v b n m + Backspace
-            val row3Layout = LinearLayout(context).apply {
-                orientation = HORIZONTAL
-                layoutParams = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT)
-            }
+            val row3Layout =
+                LinearLayout(context).apply {
+                    orientation = HORIZONTAL
+                    layoutParams = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT)
+                }
 
             // Shift key
             val shiftButton = createFunctionKeyButton("⇧", "SHIFT")
@@ -239,10 +313,11 @@ class QwertyKeyboardView
             )
 
             // Row 3: Shift + Numbers + Backspace
-            val row3Layout = LinearLayout(context).apply {
-                orientation = HORIZONTAL
-                layoutParams = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT)
-            }
+            val row3Layout =
+                LinearLayout(context).apply {
+                    orientation = HORIZONTAL
+                    layoutParams = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT)
+                }
 
             // Shift key
             val shiftButton = createFunctionKeyButton("⇧", "SHIFT")
@@ -294,10 +369,11 @@ class QwertyKeyboardView
             )
 
             // Row 3: Shift + Z-M + Backspace
-            val row3Layout = LinearLayout(context).apply {
-                orientation = HORIZONTAL
-                layoutParams = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT)
-            }
+            val row3Layout =
+                LinearLayout(context).apply {
+                    orientation = HORIZONTAL
+                    layoutParams = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT)
+                }
 
             // Shift key
             val shiftButton = createFunctionKeyButton("⇧", "SHIFT")
@@ -443,35 +519,119 @@ class QwertyKeyboardView
         private fun getAlternativeKeys(key: String): List<String> =
             when (key) {
                 // Cangjie layout alternatives (accented characters)
-                "a" -> listOf("@", "á", "à", "â", "ä", "ã")
-                "e" -> listOf("é", "è", "ê", "ë")
-                "i" -> listOf("í", "ì", "î", "ï")
-                "o" -> listOf("ó", "ò", "ô", "ö", "õ")
-                "u" -> listOf("ú", "ù", "û", "ü")
-                "n" -> listOf("ñ")
-                "c" -> listOf("ç")
-                "s" -> listOf("$", "§")
+                "a" -> {
+                    listOf("@", "á", "à", "â", "ä", "ã")
+                }
+
+                "e" -> {
+                    listOf("é", "è", "ê", "ë")
+                }
+
+                "i" -> {
+                    listOf("í", "ì", "î", "ï")
+                }
+
+                "o" -> {
+                    listOf("ó", "ò", "ô", "ö", "õ")
+                }
+
+                "u" -> {
+                    listOf("ú", "ù", "û", "ü")
+                }
+
+                "n" -> {
+                    listOf("ñ")
+                }
+
+                "c" -> {
+                    listOf("ç")
+                }
+
+                "s" -> {
+                    listOf("$", "§")
+                }
+
                 // Punctuation layout alternatives (Chinese punctuation)
-                "，" -> listOf("、", ",")
-                "。" -> listOf("．", "·", ".")
-                "？" -> listOf("?")
-                "！" -> listOf("!")
-                "：" -> listOf(":")
-                "；" -> listOf(";")
-                "（" -> listOf("【", "(")
-                "）" -> listOf("】", ")")
-                "「" -> listOf("『", "\"", """)
-                "」" -> listOf("』", "\"", """)
-                "—" -> listOf("–", "-", "－")
-                "～" -> listOf("~")
-                "『" -> listOf("「", "[", "'")
-                "』" -> listOf("」", "]", "'")
-                "【" -> listOf("（", "{")
-                "】" -> listOf("）", "}")
-                "《" -> listOf("〈", "<")
-                "》" -> listOf("〉", ">")
-                "、" -> listOf("，", "/", "\\")
-                else -> emptyList()
+                "，" -> {
+                    listOf("、", ",")
+                }
+
+                "。" -> {
+                    listOf("．", "·", ".")
+                }
+
+                "？" -> {
+                    listOf("?")
+                }
+
+                "！" -> {
+                    listOf("!")
+                }
+
+                "：" -> {
+                    listOf(":")
+                }
+
+                "；" -> {
+                    listOf(";")
+                }
+
+                "（" -> {
+                    listOf("【", "(")
+                }
+
+                "）" -> {
+                    listOf("】", ")")
+                }
+
+                "「" -> {
+                    listOf(
+                        "『",
+                        "\"",
+                        """)
+                "」" -> listOf("』", "\"", """,
+                    )
+                }
+
+                "—" -> {
+                    listOf("–", "-", "－")
+                }
+
+                "～" -> {
+                    listOf("~")
+                }
+
+                "『" -> {
+                    listOf("「", "[", "'")
+                }
+
+                "』" -> {
+                    listOf("」", "]", "'")
+                }
+
+                "【" -> {
+                    listOf("（", "{")
+                }
+
+                "】" -> {
+                    listOf("）", "}")
+                }
+
+                "《" -> {
+                    listOf("〈", "<")
+                }
+
+                "》" -> {
+                    listOf("〉", ">")
+                }
+
+                "、" -> {
+                    listOf("，", "/", "\\")
+                }
+
+                else -> {
+                    emptyList()
+                }
             }
 
         private fun enableAllKeys() {
