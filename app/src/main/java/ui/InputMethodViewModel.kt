@@ -7,6 +7,8 @@ import androidx.lifecycle.ViewModel
 import engine.EngineState
 import engine.InputMethodEngineManager
 import table.TableLoader
+import ui.keyboard.LayoutConfig
+import ui.keyboard.LayoutConfigs
 
 /**
  * 輸入法 ViewModel
@@ -17,11 +19,22 @@ import table.TableLoader
  * 3. 管理狀態轉換
  */
 class InputMethodViewModel : ViewModel() {
-
     private val engineManager = InputMethodEngineManager()
 
     private val _uiState = MutableLiveData<InputMethodUiState>()
     val uiState: LiveData<InputMethodUiState> = _uiState
+
+    // 當前布局配置（用於支援多輸入法的不同按鍵布局）
+    private val _currentLayoutConfig = MutableLiveData<LayoutConfig>()
+    val currentLayoutConfig: LiveData<LayoutConfig> = _currentLayoutConfig
+
+    // 當前字根標籤映射（用於顯示不同輸入法的字根）
+    private val _currentKeyNameMap = MutableLiveData<Map<Char, String>>()
+    val currentKeyNameMap: LiveData<Map<Char, String>> = _currentKeyNameMap
+
+    // 當前輸入法名稱
+    private val _currentInputMethodName = MutableLiveData<String>()
+    val currentInputMethodName: LiveData<String> = _currentInputMethodName
 
     init {
         // 監聽 Engine 狀態
@@ -30,11 +43,16 @@ class InputMethodViewModel : ViewModel() {
         }
 
         // 初始狀態
-        _uiState.value = InputMethodUiState(
-            code = "",
-            candidates = emptyList(),
-            keyboardState = ui.keyboard.KeyboardState.Normal
-        )
+        _uiState.value =
+            InputMethodUiState(
+                code = "",
+                candidates = emptyList(),
+                keyboardState = ui.keyboard.KeyboardState.Normal,
+            )
+
+        // 初始化布局配置為倉頡
+        _currentLayoutConfig.value = LayoutConfigs.CANGJIE
+        _currentInputMethodName.value = "倉頡"
     }
 
     /**
@@ -64,11 +82,12 @@ class InputMethodViewModel : ViewModel() {
         val selected = engineManager.selectCandidate(index)
         if (selected != null) {
             // 通知 UI 上屏
-            _uiState.value = _uiState.value?.copy(
-                commitText = selected.toString(),
-                code = "",
-                candidates = emptyList()
-            )
+            _uiState.value =
+                _uiState.value?.copy(
+                    commitText = selected.toString(),
+                    code = "",
+                    candidates = emptyList(),
+                )
 
             // 清除 commitText（避免重複上屏）
             _uiState.value = _uiState.value?.copy(commitText = null)
@@ -82,6 +101,29 @@ class InputMethodViewModel : ViewModel() {
      */
     fun retry() {
         engineManager.retry()
+    }
+
+    /**
+     * 切換到指定的輸入法
+     *
+     * @param methodId 輸入法 ID（如 "cangjie"、"array"）
+     * @param keyNameMap 該輸入法的字根標籤映射
+     * @param displayName 該輸入法的顯示名稱
+     */
+    fun switchInputMethod(
+        methodId: String,
+        keyNameMap: Map<Char, String>,
+        displayName: String,
+    ) {
+        // 更新布局配置
+        val layoutConfig = LayoutConfigs.getConfig(methodId)
+        _currentLayoutConfig.value = layoutConfig
+
+        // 更新字根標籤
+        _currentKeyNameMap.value = keyNameMap
+
+        // 更新輸入法名稱
+        _currentInputMethodName.value = displayName
     }
 
     private fun handleCharacterKey(key: String) {
@@ -105,11 +147,12 @@ class InputMethodViewModel : ViewModel() {
     private fun handleCommit() {
         val text = engineManager.commit()
         if (text != null) {
-            _uiState.value = _uiState.value?.copy(
-                commitText = text,
-                code = "",
-                candidates = emptyList()
-            )
+            _uiState.value =
+                _uiState.value?.copy(
+                    commitText = text,
+                    code = "",
+                    candidates = emptyList(),
+                )
 
             // 清除 commitText
             _uiState.value = _uiState.value?.copy(commitText = null)
@@ -117,20 +160,23 @@ class InputMethodViewModel : ViewModel() {
     }
 
     private fun handleEngineStateChange(engineState: EngineState) {
-        val keyboardState = when (engineState) {
-            is EngineState.Loading -> {
-                ui.keyboard.KeyboardState.Loading
+        val keyboardState =
+            when (engineState) {
+                is EngineState.Loading -> {
+                    ui.keyboard.KeyboardState.Loading
+                }
+
+                is EngineState.Ready -> {
+                    ui.keyboard.KeyboardState.Normal
+                }
+
+                is EngineState.Error -> {
+                    ui.keyboard.KeyboardState.Error(
+                        message = engineState.message,
+                        canRetry = engineState.canRetry,
+                    )
+                }
             }
-            is EngineState.Ready -> {
-                ui.keyboard.KeyboardState.Normal
-            }
-            is EngineState.Error -> {
-                ui.keyboard.KeyboardState.Error(
-                    message = engineState.message,
-                    canRetry = engineState.canRetry
-                )
-            }
-        }
 
         _uiState.value = _uiState.value?.copy(keyboardState = keyboardState)
     }
@@ -139,10 +185,11 @@ class InputMethodViewModel : ViewModel() {
         val code = engineManager.getCurrentCode()
         val candidates = engineManager.getCandidates()
 
-        _uiState.value = _uiState.value?.copy(
-            code = code,
-            candidates = candidates
-        )
+        _uiState.value =
+            _uiState.value?.copy(
+                code = code,
+                candidates = candidates,
+            )
     }
 }
 
@@ -154,6 +201,5 @@ data class InputMethodUiState(
     val candidates: List<Char> = emptyList(),
     val keyboardState: ui.keyboard.KeyboardState = ui.keyboard.KeyboardState.Normal,
     val commitText: String? = null,
-    val deleteText: Boolean = false
+    val deleteText: Boolean = false,
 )
-
