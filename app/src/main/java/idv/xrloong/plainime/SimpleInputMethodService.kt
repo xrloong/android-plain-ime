@@ -11,6 +11,7 @@ import table.TableLoader
 import ui.InputMethodView
 import ui.keyboard.KeyboardLayout
 import ui.keyboard.KeyboardState
+import ui.keyboard.LayoutConfigs
 
 /**
  * 簡單輸入法服務
@@ -202,6 +203,9 @@ class SimpleInputMethodService : InputMethodService() {
                 engineManager.updateTableData(state.data)
                 // 清除編碼緩衝區（防止不同輸入法間編碼混淆）
                 engineManager.clear()
+                // 更新布局配置（根據輸入法類型切換鍵盤布局結構）
+                val layoutConfig = LayoutConfigs.getConfig(state.methodId)
+                inputMethodView.updateLayoutConfig(layoutConfig)
                 // 更新鍵盤字根標籤
                 inputMethodView.updateKeyboardRootLabels(state.data.keyNameMap)
                 // 更新空白鍵標籤（顯示輸入法名稱）

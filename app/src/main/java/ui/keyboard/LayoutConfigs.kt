@@ -43,63 +43,42 @@ object LayoutConfigs {
         )
 
     /**
-     * 行列輸入法 - QWERTY 布局 + 額外按鍵
+     * 行列輸入法 - 專用 3 行布局
      *
-     * 額外按鍵：[SOS] [END]
-     * 位置：在標點符號欄上方、功能欄下方
+     * 鍵盤布局（3行）：
+     *   行1: q w e r t y u i o p
+     *   行2: a s d f g h j k l ;
+     *   行3: z x c v b n m , . /
+     *
+     * 總計：26個字母 + 3個標點符號（;, ., /）
+     * 注：字根由 CINParseResult.keyNameMap 提供，這裡定義的是布局結構
      */
     val ARRAY =
         LayoutConfig(
             methodId = "array",
             displayName = "行列",
             primaryLayout = KeyboardLayout.Cangjie,
-            additionalKeyRows =
-                listOf(
-                    listOf(
-                        KeyButtonInfo(
-                            key = "array_sos",
-                            englishLabel = "",
-                            chineseLabel = "SOS",
-                            isSpecialKey = true,
-                        ),
-                        KeyButtonInfo(
-                            key = "array_end",
-                            englishLabel = "",
-                            chineseLabel = "END",
-                            isSpecialKey = true,
-                        ),
-                    ),
-                ),
+            additionalKeyRows = emptyList(),
         )
 
     /**
-     * 大易輸入法 - QWERTY 布局 + 額外按鍵
+     * 大易輸入法 - 專用 4 行布局
      *
-     * 額外按鍵：[自動] [手動]
-     * 位置：在標點符號欄上方、功能欄下方
+     * 鍵盤布局（4行）：
+     *   行1: 1 2 3 4 5 6 7 8 9 0
+     *   行2: q w e r t y u i o p
+     *   行3: a s d f g h j k l ;
+     *   行4: z x c v b n m , . /
+     *
+     * 總計：10個數字 + 26個字母 + 4個標點符號（;, ,, ., /）
+     * 注：字根由 CINParseResult.keyNameMap 提供，這裡定義的是布局結構
      */
     val DAYI =
         LayoutConfig(
             methodId = "dayi",
             displayName = "大易",
             primaryLayout = KeyboardLayout.Cangjie,
-            additionalKeyRows =
-                listOf(
-                    listOf(
-                        KeyButtonInfo(
-                            key = "dayi_auto",
-                            englishLabel = "",
-                            chineseLabel = "自動",
-                            isSpecialKey = true,
-                        ),
-                        KeyButtonInfo(
-                            key = "dayi_manual",
-                            englishLabel = "",
-                            chineseLabel = "手動",
-                            isSpecialKey = true,
-                        ),
-                    ),
-                ),
+            additionalKeyRows = emptyList(),
         )
 
     /**

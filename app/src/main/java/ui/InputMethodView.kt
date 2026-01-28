@@ -308,6 +308,14 @@ class InputMethodView
         }
 
         /**
+         * 更新鍵盤布局配置
+         * 用於切換輸入法時更新整個鍵盤布局結構
+         */
+        fun updateLayoutConfig(layoutConfig: LayoutConfig) {
+            keyboardView.updateLayout(layoutConfig)
+        }
+
+        /**
          * 輸入法監聽器
          */
         interface InputMethodListener {

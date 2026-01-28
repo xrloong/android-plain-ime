@@ -45,25 +45,21 @@ class LayoutConfigsTest {
     }
 
     @Test
-    fun testArrayLayout_hasAdditionalKeys() {
-        // 行列：有額外按鍵
+    fun testArrayLayout_noAdditionalKeys() {
+        // 行列：沒有額外按鍵（已簡化）
         val config = LayoutConfigs.getConfig("array")
-        assertTrue("Array should have additional keys", config.additionalKeyRows.isNotEmpty())
-        assertEquals("Array should have 1 additional row", 1, config.additionalKeyRows.size)
-
-        val firstRow = config.additionalKeyRows[0]
-        assertEquals("First row should have 2 keys", 2, firstRow.size)
+        assertTrue("Array should have no additional keys", config.additionalKeyRows.isEmpty())
+        assertEquals("Array should use Cangjie layout", KeyboardLayout.Cangjie, config.primaryLayout)
+        assertEquals("Array methodId should be 'array'", "array", config.methodId)
     }
 
     @Test
-    fun testDayiLayout_hasAdditionalKeys() {
-        // 大易：有額外按鍵
+    fun testDayiLayout_noAdditionalKeys() {
+        // 大易：沒有額外按鍵（已簡化）
         val config = LayoutConfigs.getConfig("dayi")
-        assertTrue("Dayi should have additional keys", config.additionalKeyRows.isNotEmpty())
-        assertEquals("Dayi should have 1 additional row", 1, config.additionalKeyRows.size)
-
-        val firstRow = config.additionalKeyRows[0]
-        assertEquals("First row should have 2 keys", 2, firstRow.size)
+        assertTrue("Dayi should have no additional keys", config.additionalKeyRows.isEmpty())
+        assertEquals("Dayi should use Cangjie layout", KeyboardLayout.Cangjie, config.primaryLayout)
+        assertEquals("Dayi methodId should be 'dayi'", "dayi", config.methodId)
     }
 
     @Test

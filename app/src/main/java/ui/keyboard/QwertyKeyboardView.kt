@@ -172,15 +172,43 @@ class QwertyKeyboardView
                 'b' to "月",
                 'n' to "弓",
                 'm' to "一",
+                // 標點符號和數字的默認標籤（用於 Fallback）
+                ';' to ";",
+                ',' to ",",
+                '.' to ".",
+                '/' to "/",
+                '0' to "0",
+                '1' to "1",
+                '2' to "2",
+                '3' to "3",
+                '4' to "4",
+                '5' to "5",
+                '6' to "6",
+                '7' to "7",
+                '8' to "8",
+                '9' to "9",
             )
 
         private fun setupKeyboard() {
             removeAllViews() // Clear before rebuilding
 
-            when (currentLayout) {
-                is KeyboardLayout.Cangjie -> setupCangjieLayout()
-                is KeyboardLayout.Punctuation -> setupPunctuationLayout()
-                is KeyboardLayout.English -> setupEnglishLayout()
+            // 根據輸入法類型選擇對應的布局
+            when {
+                currentLayoutConfig.methodId == "array" -> {
+                    setupArrayLayout()
+                }
+
+                currentLayoutConfig.methodId == "dayi" -> {
+                    setupDayiLayout()
+                }
+
+                else -> {
+                    when (currentLayout) {
+                        is KeyboardLayout.Cangjie -> setupCangjieLayout()
+                        is KeyboardLayout.Punctuation -> setupPunctuationLayout()
+                        is KeyboardLayout.English -> setupEnglishLayout()
+                    }
+                }
             }
 
             // 添加額外按鍵行（如果有）
@@ -278,6 +306,161 @@ class QwertyKeyboardView
             row3Layout.addView(backspaceButton)
 
             addView(row3Layout)
+        }
+
+        /**
+         * 行列輸入法布局（3行）
+         * 行1: q w e r t y u i o p
+         * 行2: a s d f g h j k l ;
+         * 行3: z x c v b n m , . /
+         */
+        private fun setupArrayLayout() {
+            // 第一行：q w e r t y u i o p
+            addKeyRow(
+                listOf(
+                    "q\n${getRootLabel('q')}",
+                    "w\n${getRootLabel('w')}",
+                    "e\n${getRootLabel('e')}",
+                    "r\n${getRootLabel('r')}",
+                    "t\n${getRootLabel('t')}",
+                    "y\n${getRootLabel('y')}",
+                    "u\n${getRootLabel('u')}",
+                    "i\n${getRootLabel('i')}",
+                    "o\n${getRootLabel('o')}",
+                    "p\n${getRootLabel('p')}",
+                ),
+            )
+
+            // 第二行：a s d f g h j k l ;
+            addKeyRow(
+                listOf(
+                    "a\n${getRootLabel('a')}",
+                    "s\n${getRootLabel('s')}",
+                    "d\n${getRootLabel('d')}",
+                    "f\n${getRootLabel('f')}",
+                    "g\n${getRootLabel('g')}",
+                    "h\n${getRootLabel('h')}",
+                    "j\n${getRootLabel('j')}",
+                    "k\n${getRootLabel('k')}",
+                    "l\n${getRootLabel('l')}",
+                    ";\n${getRootLabel(';')}",
+                ),
+            )
+
+            // 第三行：Shift + z x c v b n m , . / + Backspace
+            val row3Layout =
+                LinearLayout(context).apply {
+                    orientation = HORIZONTAL
+                    layoutParams = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT)
+                }
+
+            // Shift key
+            val shiftButton = createFunctionKeyButton("⇧", "SHIFT")
+            row3Layout.addView(shiftButton)
+
+            // z-m keys
+            for (key in listOf('z', 'x', 'c', 'v', 'b', 'n', 'm')) {
+                val keyButton = createKeyButton("$key\n${getRootLabel(key)}")
+                row3Layout.addView(keyButton)
+            }
+
+            // 標點符號：, . /
+            for (key in listOf(',', '.', '/')) {
+                val keyButton = createKeyButton("$key\n${getRootLabel(key)}")
+                row3Layout.addView(keyButton)
+            }
+
+            // Backspace key
+            val backspaceButton = createFunctionKeyButton("⌫", "BACKSPACE")
+            row3Layout.addView(backspaceButton)
+
+            addView(row3Layout)
+        }
+
+        /**
+         * 大易輸入法布局（4行）
+         * 行1: 1 2 3 4 5 6 7 8 9 0
+         * 行2: q w e r t y u i o p
+         * 行3: a s d f g h j k l ;
+         * 行4: z x c v b n m , . /
+         */
+        private fun setupDayiLayout() {
+            // 第一行：1 2 3 4 5 6 7 8 9 0
+            addKeyRow(
+                listOf(
+                    "1\n${getRootLabel('1')}",
+                    "2\n${getRootLabel('2')}",
+                    "3\n${getRootLabel('3')}",
+                    "4\n${getRootLabel('4')}",
+                    "5\n${getRootLabel('5')}",
+                    "6\n${getRootLabel('6')}",
+                    "7\n${getRootLabel('7')}",
+                    "8\n${getRootLabel('8')}",
+                    "9\n${getRootLabel('9')}",
+                    "0\n${getRootLabel('0')}",
+                ),
+            )
+
+            // 第二行：q w e r t y u i o p
+            addKeyRow(
+                listOf(
+                    "q\n${getRootLabel('q')}",
+                    "w\n${getRootLabel('w')}",
+                    "e\n${getRootLabel('e')}",
+                    "r\n${getRootLabel('r')}",
+                    "t\n${getRootLabel('t')}",
+                    "y\n${getRootLabel('y')}",
+                    "u\n${getRootLabel('u')}",
+                    "i\n${getRootLabel('i')}",
+                    "o\n${getRootLabel('o')}",
+                    "p\n${getRootLabel('p')}",
+                ),
+            )
+
+            // 第三行：a s d f g h j k l ;
+            addKeyRow(
+                listOf(
+                    "a\n${getRootLabel('a')}",
+                    "s\n${getRootLabel('s')}",
+                    "d\n${getRootLabel('d')}",
+                    "f\n${getRootLabel('f')}",
+                    "g\n${getRootLabel('g')}",
+                    "h\n${getRootLabel('h')}",
+                    "j\n${getRootLabel('j')}",
+                    "k\n${getRootLabel('k')}",
+                    "l\n${getRootLabel('l')}",
+                    ";\n${getRootLabel(';')}",
+                ),
+            )
+
+            // 第四行：Shift + z x c v b n m , . / + Backspace
+            val row4Layout =
+                LinearLayout(context).apply {
+                    orientation = HORIZONTAL
+                    layoutParams = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT)
+                }
+
+            // Shift key
+            val shiftButton = createFunctionKeyButton("⇧", "SHIFT")
+            row4Layout.addView(shiftButton)
+
+            // z-m keys
+            for (key in listOf('z', 'x', 'c', 'v', 'b', 'n', 'm')) {
+                val keyButton = createKeyButton("$key\n${getRootLabel(key)}")
+                row4Layout.addView(keyButton)
+            }
+
+            // 標點符號：, . /
+            for (key in listOf(',', '.', '/')) {
+                val keyButton = createKeyButton("$key\n${getRootLabel(key)}")
+                row4Layout.addView(keyButton)
+            }
+
+            // Backspace key
+            val backspaceButton = createFunctionKeyButton("⌫", "BACKSPACE")
+            row4Layout.addView(backspaceButton)
+
+            addView(row4Layout)
         }
 
         private fun setupPunctuationLayout() {
