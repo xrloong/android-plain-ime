@@ -141,8 +141,8 @@ class SimpleInputMethodService : InputMethodService() {
                 currentInputConnection?.commitText(text, 1)
             }
         } else {
-            // 無編碼時，發送 Enter 鍵
-            sendDefaultEditorAction(true)
+            // 無編碼時，插入換行
+            currentInputConnection?.commitText("\n", 1)
         }
     }
 
