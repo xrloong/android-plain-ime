@@ -235,6 +235,11 @@ class SimpleInputMethodService : InputMethodService() {
         }
     }
 
+    override fun onWindowShown() {
+        super.onWindowShown()
+        inputMethodManager.reloadPreferences()
+    }
+
     private fun handleEngineStateChange(state: EngineState) {
         if (!::inputMethodView.isInitialized) return
 

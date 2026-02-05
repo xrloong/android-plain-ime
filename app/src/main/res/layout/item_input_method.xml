@@ -13,7 +13,7 @@
         android:layout_width="48dp"
         android:layout_height="48dp"
         android:padding="12dp"
-        android:src="@android:drawable/ic_menu_sort_by_size"
+        android:src="@drawable/ic_drag_handle"
         android:contentDescription="拖曳排序"
         android:alpha="0.5" />
 
