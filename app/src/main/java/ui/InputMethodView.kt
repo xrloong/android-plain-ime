@@ -47,6 +47,14 @@ class InputMethodView
         init {
             orientation = VERTICAL
 
+            // 設置背景色（與鍵盤背景一致，確保導航列區域不透明）
+            val keyboardBgColor =
+                resources.getColor(
+                    resources.getIdentifier("keyboard_background", "color", context.packageName),
+                    null,
+                )
+            setBackgroundColor(keyboardBgColor)
+
             // 編碼顯示
             composeView =
                 ComposeView(context).apply {
