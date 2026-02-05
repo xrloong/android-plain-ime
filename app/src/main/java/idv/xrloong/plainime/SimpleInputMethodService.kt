@@ -101,18 +101,22 @@ class SimpleInputMethodService : InputMethodService() {
     }
 
     private fun handleCharacterKey(key: String) {
-        val currentLayout = inputMethodView.getCurrentKeyboardLayout()
-
-        if (key.length == 1 && key[0].lowercaseChar() in 'a'..'z') {
-            // Check if in Cangjie mode - use engine for Cangjie encoding
-            // In English mode - directly insert the letter
-            if (currentLayout is ui.keyboard.KeyboardLayout.Cangjie) {
-                engineManager.processKey(key[0].lowercaseChar())
-            } else {
+        if (key.length != 1) {
+            if (key.isNotEmpty()) {
                 currentInputConnection?.commitText(key, 1)
             }
-        } else if (key.isNotEmpty()) {
-            // 直接輸入字符（標點符號、數字等）
+            return
+        }
+
+        val currentLayout = inputMethodView.getCurrentKeyboardLayout()
+        if (currentLayout is ui.keyboard.KeyboardLayout.Cangjie) {
+            // 中文輸入法模式 - 讓引擎判斷是否為有效字根鍵
+            if (!engineManager.processKey(key[0])) {
+                // 引擎拒絕此鍵 - 直接輸出
+                currentInputConnection?.commitText(key, 1)
+            }
+        } else {
+            // 英文或其他模式 - 直接輸出
             currentInputConnection?.commitText(key, 1)
         }
     }

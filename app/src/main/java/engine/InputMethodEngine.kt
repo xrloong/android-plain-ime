@@ -162,7 +162,11 @@ class InputMethodEngine(
     }
 
     private fun isValidKey(key: Char): Boolean {
-        return key.lowercaseChar() in 'a'..'z'
+        return if (tableData.keyNameMap.isNotEmpty()) {
+            key in tableData.keyNameMap
+        } else {
+            key.lowercaseChar() in 'a'..'z'
+        }
     }
 
     private fun getIndexFromSelectionKey(selectionKey: Char): Int {

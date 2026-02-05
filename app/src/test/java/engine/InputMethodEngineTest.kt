@@ -353,7 +353,104 @@ class InputMethodEngineTest {
         assertEquals("昌", result)
     }
 
+    // ===== 非字母字根鍵測試（行列、大易等） =====
+
+    @Test
+    fun testProcessKey_arrayRootKeys_allAccepted() {
+        // 行列輸入法有 30 個字根鍵：a-z + ,./;
+        val arrayEngine = InputMethodEngine(createArrayTestTableData())
+
+        // 驗證所有 keyNameMap 中的字根鍵都被接受
+        val arrayKeyNameMap = createArrayTestTableData().keyNameMap
+        for (key in arrayKeyNameMap.keys) {
+            arrayEngine.clear()
+            val result = arrayEngine.processKey(key)
+            assertTrue("Root key '$key' should be accepted", result)
+            assertEquals("Code buffer should contain '$key'", key.toString(), arrayEngine.getCurrentCode())
+        }
+    }
+
+    @Test
+    fun testProcessKey_arrayPunctuationRoots_acceptedAsRootKeys() {
+        val arrayEngine = InputMethodEngine(createArrayTestTableData())
+
+        // 這些是行列輸入法的字根，不應直接輸出
+        for (key in listOf(',', '.', '/', ';')) {
+            arrayEngine.clear()
+            val result = arrayEngine.processKey(key)
+            assertTrue("'$key' should be accepted as root key in Array", result)
+        }
+    }
+
+    @Test
+    fun testProcessKey_dayiDigitRoots_acceptedAsRootKeys() {
+        val dayiEngine = InputMethodEngine(createDayiTestTableData())
+
+        // 大易輸入法的數字字根
+        for (key in '0'..'9') {
+            dayiEngine.clear()
+            val result = dayiEngine.processKey(key)
+            assertTrue("'$key' should be accepted as root key in Dayi", result)
+        }
+    }
+
+    @Test
+    fun testProcessKey_nonRootKey_rejected() {
+        val arrayEngine = InputMethodEngine(createArrayTestTableData())
+
+        // 行列輸入法不使用數字作為字根
+        val result = arrayEngine.processKey('1')
+        assertFalse("'1' should be rejected in Array", result)
+    }
+
+    @Test
+    fun testProcessKey_arrayCommaRoot_lookupCandidates() {
+        val arrayEngine = InputMethodEngine(createArrayTestTableData())
+
+        arrayEngine.processKey(',')
+
+        assertEquals(",", arrayEngine.getCurrentCode())
+        val candidates = arrayEngine.getCandidates()
+        assertTrue("Comma root should have candidates", candidates.isNotEmpty())
+        assertTrue(candidates.contains('火'))
+    }
+
     // ===== 輔助方法 =====
+
+    private fun createArrayTestTableData(): CINParseResult {
+        // 模擬行列輸入法的 keyNameMap (a-z + ,./;)
+        val keyNameMap = mutableMapOf<Char, String>()
+        for (c in 'a'..'z') keyNameMap[c] = c.toString()
+        keyNameMap[','] = "8v"
+        keyNameMap['.'] = "9v"
+        keyNameMap['/'] = "0v"
+        keyNameMap[';'] = "0-"
+
+        return CINParseResult(
+            charToCode = mapOf('火' to ",", '米' to ","),
+            codeToCandidates = mapOf("," to listOf('火', '米')),
+            metadata = mapOf("ename" to "Array", "cname" to "行列"),
+            keyNameMap = keyNameMap
+        )
+    }
+
+    private fun createDayiTestTableData(): CINParseResult {
+        // 模擬大易輸入法的 keyNameMap (a-z + 0-9 + ,./;)
+        val keyNameMap = mutableMapOf<Char, String>()
+        for (c in 'a'..'z') keyNameMap[c] = c.toString()
+        for (c in '0'..'9') keyNameMap[c] = c.toString()
+        keyNameMap[','] = "力"
+        keyNameMap['.'] = "點"
+        keyNameMap['/'] = "竹"
+        keyNameMap[';'] = "虫"
+
+        return CINParseResult(
+            charToCode = mapOf('力' to ","),
+            codeToCandidates = mapOf("," to listOf('力')),
+            metadata = mapOf("ename" to "DaYi", "cname" to "大易"),
+            keyNameMap = keyNameMap
+        )
+    }
 
     private fun createTestTableData(): CINParseResult {
         val charToCode = mapOf(
