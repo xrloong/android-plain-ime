@@ -41,6 +41,7 @@ class InputMethodManager(private val context: Context) {
     private val tableLoader = TableLoader(context)
     private val cinParser = CINParser()
     private val singleThreadExecutor = Executors.newSingleThreadExecutor()
+    private val inputMethodPreferences = InputMethodPreferences(prefs)
 
     // 已加載的輸入法緩存 (methodId -> CINParseResult)
     private val loadedMethods = mutableMapOf<String, CINParseResult>()
@@ -69,11 +70,8 @@ class InputMethodManager(private val context: Context) {
      * 英文輸入法不需要 CIN 檔案，永遠可用
      */
     private fun discoverAvailableMethods() {
-        availableMethods = InputMethodMetadata.BUILTIN_METHODS.filter { method ->
-            // 英文輸入法不需要 CIN 檔案，永遠可用
-            if (InputMethodMetadata.isEnglishMethod(method.id)) {
-                return@filter true
-            }
+        val allAvailable = InputMethodMetadata.BUILTIN_METHODS.filter { method ->
+            if (InputMethodMetadata.isEnglishMethod(method.id)) return@filter true
             try {
                 context.assets.open(method.fileName).use { true }
             } catch (e: Exception) {
@@ -81,12 +79,16 @@ class InputMethodManager(private val context: Context) {
             }
         }
 
-        // 如果沒有找到任何輸入法，至少嘗試使用預設的倉頡輸入法
-        if (availableMethods.isEmpty()) {
-            availableMethods = listOf(InputMethodMetadata.BUILTIN_METHODS[0])
+        // Filter by user-enabled preferences, respecting user-defined order
+        val orderedEnabled = inputMethodPreferences.getOrderedEnabledMethods()
+        availableMethods = orderedEnabled.filter { enabled ->
+            allAvailable.any { it.id == enabled.id }
         }
 
-        // 如果當前選定的輸入法不可用，改為第一個可用的輸入法
+        if (availableMethods.isEmpty()) {
+            availableMethods = listOf(allAvailable.firstOrNull() ?: InputMethodMetadata.BUILTIN_METHODS[0])
+        }
+
         if (availableMethods.find { it.id == currentMethodId } == null) {
             currentMethodId = availableMethods[0].id
             savePreferredMethod(currentMethodId)
@@ -232,6 +234,16 @@ class InputMethodManager(private val context: Context) {
      */
     fun retry() {
         loadCurrentMethod()
+    }
+
+    fun reloadPreferences() {
+        discoverAvailableMethods()
+        // If current method was disabled, switch to the first available
+        if (availableMethods.find { it.id == currentMethodId } == null) {
+            currentMethodId = availableMethods[0].id
+            savePreferredMethod(currentMethodId)
+            loadCurrentMethod()
+        }
     }
 
     /**
