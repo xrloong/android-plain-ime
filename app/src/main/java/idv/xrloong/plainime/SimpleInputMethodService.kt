@@ -167,15 +167,8 @@ class SimpleInputMethodService : InputMethodService() {
     }
 
     private fun handleGlobe() {
-        val currentLayout = inputMethodView.getCurrentKeyboardLayout()
-
-        if (currentLayout is KeyboardLayout.Cangjie) {
-            // 在中文鍵盤模式下 - 切換到下一個中文輸入法
-            inputMethodManager.switchToNext()
-        } else {
-            // 從英文/標點模式切回中文
-            inputMethodView.toggleInputMethod()
-        }
+        // Globe 按鈕統一切換到下一個輸入法
+        inputMethodManager.switchToNext()
     }
 
     private fun handlePeriod() {
@@ -209,6 +202,21 @@ class SimpleInputMethodService : InputMethodService() {
                 // 更新鍵盤字根標籤
                 inputMethodView.updateKeyboardRootLabels(state.data.keyNameMap)
                 // 更新空白鍵標籤（顯示輸入法名稱）
+                val metadata = inputMethodManager.getCurrentMetadata()
+                if (metadata != null) {
+                    inputMethodView.updateSpaceBarLabel(metadata.displayName)
+                }
+                inputMethodView.setKeyboardState(KeyboardState.Normal)
+            }
+            is InputMethodState.EnglishReady -> {
+                // 英文輸入法不需要引擎
+                engineManager.clear()
+                // 更新布局配置為英文鍵盤
+                val layoutConfig = LayoutConfigs.getConfig(state.methodId)
+                inputMethodView.updateLayoutConfig(layoutConfig)
+                // 英文模式不需要字根標籤
+                inputMethodView.updateKeyboardRootLabels(emptyMap())
+                // 更新空白鍵標籤
                 val metadata = inputMethodManager.getCurrentMetadata()
                 if (metadata != null) {
                     inputMethodView.updateSpaceBarLabel(metadata.displayName)

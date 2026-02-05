@@ -16,15 +16,27 @@ data class InputMethodMetadata(
 ) {
     companion object {
         /**
+         * 英文輸入法的特殊標記檔名（無需載入 CIN 檔案）
+         */
+        const val ENGLISH_NO_CIN = ""
+
+        /**
          * 內建輸入法列表（按輪替順序）
+         * 順序：倉頡 → 英文 → 行列 → 大易 → 嘸蝦米 → 鄭碼
          */
         val BUILTIN_METHODS = listOf(
             InputMethodMetadata("cangjie", "倉頡", "qhcj.cin", 0),
-            InputMethodMetadata("array", "行列", "qhar.cin", 1),
-            InputMethodMetadata("boshiamy", "嘸蝦米", "qhbs.cin", 2),
+            InputMethodMetadata("english", "英文", ENGLISH_NO_CIN, 1),
+            InputMethodMetadata("array", "行列", "qhar.cin", 2),
             InputMethodMetadata("dayi", "大易", "qhdy.cin", 3),
-            InputMethodMetadata("zhengma", "鄭碼", "qhzm.cin", 4)
+            InputMethodMetadata("boshiamy", "嘸蝦米", "qhbs.cin", 4),
+            InputMethodMetadata("zhengma", "鄭碼", "qhzm.cin", 5)
         )
+
+        /**
+         * 檢查是否為英文輸入法（不需要 CIN 檔案）
+         */
+        fun isEnglishMethod(methodId: String): Boolean = methodId == "english"
 
         /**
          * 根據當前輸入法 ID 取得下一個輸入法

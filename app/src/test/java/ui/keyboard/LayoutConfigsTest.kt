@@ -6,13 +6,13 @@ import org.junit.Test
 /**
  * LayoutConfigs 的單元測試
  *
- * 測試所有 5 種輸入法的布局配置
+ * 測試所有 6 種輸入法的布局配置
  */
 class LayoutConfigsTest {
     @Test
     fun testLayoutConfigs_allMethods_haveConfig() {
-        // 驗證所有 5 種輸入法都有配置
-        val methods = listOf("cangjie", "boshiamy", "zhengma", "array", "dayi")
+        // 驗證所有 6 種輸入法都有配置
+        val methods = listOf("cangjie", "english", "boshiamy", "zhengma", "array", "dayi")
         for (methodId in methods) {
             val config = LayoutConfigs.getConfig(methodId)
             assertNotNull("Method $methodId should have a config", config)
@@ -71,13 +71,14 @@ class LayoutConfigsTest {
     }
 
     @Test
-    fun testGetAllConfigs_returns5Configs() {
+    fun testGetAllConfigs_returns6Configs() {
         // 獲取所有配置
         val allConfigs = LayoutConfigs.getAllConfigs()
-        assertEquals("Should have 5 input methods", 5, allConfigs.size)
+        assertEquals("Should have 6 input methods", 6, allConfigs.size)
 
         val methodIds = allConfigs.map { it.methodId }
         assertTrue("Should contain cangjie", methodIds.contains("cangjie"))
+        assertTrue("Should contain english", methodIds.contains("english"))
         assertTrue("Should contain boshiamy", methodIds.contains("boshiamy"))
         assertTrue("Should contain zhengma", methodIds.contains("zhengma"))
         assertTrue("Should contain array", methodIds.contains("array"))
@@ -85,9 +86,18 @@ class LayoutConfigsTest {
     }
 
     @Test
+    fun testEnglishLayout_usesEnglishKeyboardLayout() {
+        // 英文：使用 English 布局
+        val config = LayoutConfigs.getConfig("english")
+        assertTrue("English should have no additional keys", config.additionalKeyRows.isEmpty())
+        assertEquals("English should use English layout", KeyboardLayout.English, config.primaryLayout)
+    }
+
+    @Test
     fun testLayoutConfig_displayNames() {
         // 驗證顯示名稱
         assertEquals("Cangjie display name", "倉頡", LayoutConfigs.CANGJIE.displayName)
+        assertEquals("English display name", "英文", LayoutConfigs.ENGLISH.displayName)
         assertEquals("Boshiamy display name", "嘸蝦米", LayoutConfigs.BOSHIAMY.displayName)
         assertEquals("Zhengma display name", "鄭碼", LayoutConfigs.ZHENGMA.displayName)
         assertEquals("Array display name", "行列", LayoutConfigs.ARRAY.displayName)

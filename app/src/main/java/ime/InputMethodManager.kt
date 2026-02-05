@@ -23,6 +23,11 @@ sealed class InputMethodState {
     data class Ready(val methodId: String, val data: CINParseResult) : InputMethodState()
 
     /**
+     * 英文輸入法已就緒（不需要 CIN 數據）
+     */
+    data class EnglishReady(val methodId: String) : InputMethodState()
+
+    /**
      * 加載出錯
      */
     data class Error(val methodId: String, val message: String) : InputMethodState()
@@ -61,9 +66,14 @@ class InputMethodManager(private val context: Context) {
 
     /**
      * 發現可用的輸入法（檢查 assets 中哪些 CIN 文件存在）
+     * 英文輸入法不需要 CIN 檔案，永遠可用
      */
     private fun discoverAvailableMethods() {
         availableMethods = InputMethodMetadata.BUILTIN_METHODS.filter { method ->
+            // 英文輸入法不需要 CIN 檔案，永遠可用
+            if (InputMethodMetadata.isEnglishMethod(method.id)) {
+                return@filter true
+            }
             try {
                 context.assets.open(method.fileName).use { true }
             } catch (e: Exception) {
@@ -91,6 +101,12 @@ class InputMethodManager(private val context: Context) {
             try {
                 val method = InputMethodMetadata.getById(currentMethodId)
                     ?: InputMethodMetadata.BUILTIN_METHODS[0]
+
+                // 英文輸入法不需要加載 CIN 檔案
+                if (InputMethodMetadata.isEnglishMethod(method.id)) {
+                    _currentMethod.postValue(InputMethodState.EnglishReady(method.id))
+                    return@execute
+                }
 
                 // 檢查是否已緩存
                 val cached = loadedMethods[method.id]
@@ -125,6 +141,10 @@ class InputMethodManager(private val context: Context) {
         singleThreadExecutor.execute {
             for (method in availableMethods) {
                 if (method.id == currentMethodId || loadedMethods.containsKey(method.id)) {
+                    continue
+                }
+                // 英文輸入法不需要預加載
+                if (InputMethodMetadata.isEnglishMethod(method.id)) {
                     continue
                 }
 

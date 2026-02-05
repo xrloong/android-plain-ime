@@ -19,6 +19,18 @@ object LayoutConfigs {
         )
 
     /**
+     * 英文輸入法 - 純英文 QWERTY 布局
+     * 按鍵直接輸出英文字母，不經過輸入引擎
+     */
+    val ENGLISH =
+        LayoutConfig(
+            methodId = "english",
+            displayName = "英文",
+            primaryLayout = KeyboardLayout.English,
+            additionalKeyRows = emptyList(),
+        )
+
+    /**
      * 嘸蝦米輸入法 - 標準 QWERTY 布局，無額外按鍵
      * 重用倉頡的 QWERTY 布局，只是字根不同（來自 CIN 文件）
      */
@@ -90,6 +102,7 @@ object LayoutConfigs {
     fun getConfig(methodId: String): LayoutConfig =
         when (methodId) {
             "cangjie" -> CANGJIE
+            "english" -> ENGLISH
             "boshiamy" -> BOSHIAMY
             "zhengma" -> ZHENGMA
             "array" -> ARRAY
@@ -103,6 +116,7 @@ object LayoutConfigs {
     fun getAllConfigs(): List<LayoutConfig> =
         listOf(
             CANGJIE,
+            ENGLISH,
             BOSHIAMY,
             ZHENGMA,
             ARRAY,
