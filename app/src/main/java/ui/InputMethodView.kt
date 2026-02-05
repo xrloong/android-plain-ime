@@ -298,6 +298,7 @@ class InputMethodView
          */
         fun updateKeyboardRootLabels(keyNameMap: Map<Char, String>) {
             keyboardView.updateRootLabels(keyNameMap)
+            composeView.updateKeyNameMap(keyNameMap)
         }
 
         /**
