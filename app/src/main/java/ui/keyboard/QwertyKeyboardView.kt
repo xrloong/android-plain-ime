@@ -656,16 +656,20 @@ class QwertyKeyboardView
             val globeButton = createFunctionKeyButton("🌐", "GLOBE")
             rowLayout.addView(globeButton)
 
-            // 4. Space button with current input method name (2x width)
+            // 4. Settings button
+            val settingsButton = createFunctionKeyButton("⚙️", "SETTINGS")
+            rowLayout.addView(settingsButton)
+
+            // 5. Space button with current input method name (2x width)
             spaceButton = createFunctionKeyButton("倉頡", "SPACE")
             spaceButton!!.layoutParams = LinearLayout.LayoutParams(0, heightPx, 2f)
             rowLayout.addView(spaceButton)
 
-            // 5. Period button
+            // 6. Period button
             val periodButton = createFunctionKeyButton("。", "PERIOD")
             rowLayout.addView(periodButton)
 
-            // 6. Return button
+            // 7. Return button
             val returnButton = createFunctionKeyButton("↵", "ENTER")
             rowLayout.addView(returnButton)
 

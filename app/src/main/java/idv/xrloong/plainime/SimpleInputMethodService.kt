@@ -1,5 +1,6 @@
 package idv.xrloong.plainime
 
+import android.content.Intent
 import android.inputmethodservice.InputMethodService
 import android.view.View
 import android.view.inputmethod.EditorInfo
@@ -12,6 +13,7 @@ import ui.InputMethodView
 import ui.keyboard.KeyboardLayout
 import ui.keyboard.KeyboardState
 import ui.keyboard.LayoutConfigs
+import ui.settings.SettingsActivity
 
 /**
  * 簡單輸入法服務
@@ -95,6 +97,7 @@ class SimpleInputMethodService : InputMethodService() {
             "COMMA" -> handleComma()
             "GLOBE" -> handleGlobe()
             "PERIOD" -> handlePeriod()
+            "SETTINGS" -> handleSettings()
             else -> handleCharacterKey(key)
         }
         updateUI()
@@ -178,6 +181,12 @@ class SimpleInputMethodService : InputMethodService() {
     private fun handlePeriod() {
         // Insert period
         currentInputConnection?.commitText("。", 1)
+    }
+
+    private fun handleSettings() {
+        val intent = Intent(this, SettingsActivity::class.java)
+        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+        startActivity(intent)
     }
 
     private fun handleCandidateSelection(index: Int) {
