@@ -272,4 +272,59 @@ class CINParserTest {
         assertEquals("未知", result.chineseName)
         assertEquals("1234567890", result.selectionKeys)
     }
+
+    @Test
+    fun testParse_withFrequencyTable_sortsCandidates() {
+        val content = """
+            %chardef begin
+            aa 晶
+            aa 明
+            aa 昌
+            %chardef end
+        """.trimIndent()
+
+        // 明 排名最高，昌 次之，晶 最低
+        val freqTable = CharFrequencyTable.parse("明\n昌\n晶")
+        val result = parser.parse(content, freqTable)
+
+        val candidates = result.getCandidates("aa")
+        assertEquals(listOf('明', '昌', '晶'), candidates)
+    }
+
+    @Test
+    fun testParse_withoutFrequencyTable_preservesOriginalOrder() {
+        val content = """
+            %chardef begin
+            aa 晶
+            aa 明
+            aa 昌
+            %chardef end
+        """.trimIndent()
+
+        val result = parser.parse(content)
+
+        val candidates = result.getCandidates("aa")
+        assertEquals(listOf('晶', '明', '昌'), candidates)
+    }
+
+    @Test
+    fun testParse_withFrequencyTable_unknownCharsAfterKnown() {
+        val content = """
+            %chardef begin
+            aa 龍
+            aa 明
+            aa 鳳
+            %chardef end
+        """.trimIndent()
+
+        // 只有 明 在字頻表中
+        val freqTable = CharFrequencyTable.parse("明")
+        val result = parser.parse(content, freqTable)
+
+        val candidates = result.getCandidates("aa")
+        assertEquals('明', candidates[0])
+        // 不在字頻表的字排在後面，保持原順序
+        assertEquals('龍', candidates[1])
+        assertEquals('鳳', candidates[2])
+    }
 }

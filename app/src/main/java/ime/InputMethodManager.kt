@@ -3,6 +3,7 @@ package ime
 import android.content.Context
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import cin.CharFrequencyTable
 import cin.CINParser
 import cin.CINParseResult
 import table.TableLoader
@@ -42,6 +43,7 @@ class InputMethodManager(private val context: Context) {
     private val cinParser = CINParser()
     private val singleThreadExecutor = Executors.newSingleThreadExecutor()
     private val inputMethodPreferences = InputMethodPreferences(prefs)
+    private var frequencyTable: CharFrequencyTable = CharFrequencyTable.EMPTY
 
     // 已加載的輸入法緩存 (methodId -> CINParseResult)
     private val loadedMethods = mutableMapOf<String, CINParseResult>()
@@ -57,12 +59,23 @@ class InputMethodManager(private val context: Context) {
     val currentMethod: LiveData<InputMethodState> = _currentMethod
 
     init {
+        // 加載字頻表
+        loadFrequencyTable()
         // 發現可用的輸入法
         discoverAvailableMethods()
         // 加載當前選定的輸入法
         loadCurrentMethod()
         // 後台預加載其他輸入法
         preloadOtherMethods()
+    }
+
+    private fun loadFrequencyTable() {
+        try {
+            val content = context.assets.open("char_freq.txt").bufferedReader().use { it.readText() }
+            frequencyTable = CharFrequencyTable.parse(content)
+        } catch (e: Exception) {
+            frequencyTable = CharFrequencyTable.EMPTY
+        }
     }
 
     /**
@@ -125,7 +138,7 @@ class InputMethodManager(private val context: Context) {
                     throw Exception("文件內容為空: ${method.fileName}")
                 }
 
-                val parseResult = cinParser.parse(content)
+                val parseResult = cinParser.parse(content, frequencyTable)
                 loadedMethods[method.id] = parseResult
                 _currentMethod.postValue(InputMethodState.Ready(method.id, parseResult))
             } catch (e: Exception) {
@@ -155,7 +168,7 @@ class InputMethodManager(private val context: Context) {
                     val content = inputStream.bufferedReader().use { it.readText() }
                     if (content.isBlank()) continue
 
-                    val parseResult = cinParser.parse(content)
+                    val parseResult = cinParser.parse(content, frequencyTable)
                     loadedMethods[method.id] = parseResult
                 } catch (e: Exception) {
                     // 預加載失敗不影響使用，延遲加載

@@ -8,7 +8,7 @@ class CINParser {
      * @return 解析結果，包含字符到編碼的映射與編碼到候選字的映射
      * @throws CINParseException 當檔案格式錯誤時
      */
-    fun parse(content: String): CINParseResult {
+    fun parse(content: String, frequencyTable: CharFrequencyTable = CharFrequencyTable.EMPTY): CINParseResult {
         if (content.isBlank()) {
             throw CINParseException("CIN 檔案內容為空")
         }
@@ -105,13 +105,14 @@ class CINParser {
         }
 
         // 建立映射表
-        return buildMappings(charDefs, metadata, keyNameMap)
+        return buildMappings(charDefs, metadata, keyNameMap, frequencyTable)
     }
 
     private fun buildMappings(
         charDefs: List<CharDef>,
         metadata: Map<String, String>,
-        keyNameMap: Map<Char, String>
+        keyNameMap: Map<Char, String>,
+        frequencyTable: CharFrequencyTable
     ): CINParseResult {
         val charToCode = mutableMapOf<Char, String>()
         val codeToCandidates = mutableMapOf<String, MutableList<Char>>()
@@ -126,9 +127,15 @@ class CINParser {
             codeToCandidates.getOrPut(charDef.code) { mutableListOf() }.add(charDef.char)
         }
 
+        val finalCandidates = if (frequencyTable.size > 0) {
+            codeToCandidates.mapValues { frequencyTable.sortCandidates(it.value) }
+        } else {
+            codeToCandidates.mapValues { it.value.toList() }
+        }
+
         return CINParseResult(
             charToCode = charToCode,
-            codeToCandidates = codeToCandidates.mapValues { it.value.toList() },
+            codeToCandidates = finalCandidates,
             metadata = metadata,
             keyNameMap = keyNameMap
         )
